@@ -24,8 +24,9 @@ WORKDIR /app
 # Copy backend jar
 COPY --from=backend-build /app/backend/build/libs/*.jar app.jar
 
-# Copy frontend static files
-COPY --from=frontend-build /app/frontend/build/dist/js/productionExecutable/ ./static/
+# Copy frontend static files (JS bundle + HTML)
+COPY --from=frontend-build /app/frontend/build/kotlin-webpack/js/productionExecutable/ ./static/
+COPY --from=frontend-build /app/frontend/build/processedResources/js/main/ ./static/
 
 # Create data directory
 RUN mkdir -p /app/data
