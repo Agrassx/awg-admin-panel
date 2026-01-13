@@ -2,6 +2,7 @@
 FROM gradle:8.12-jdk21 AS frontend-build
 WORKDIR /app
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY gradle ./gradle
 COPY frontend ./frontend
 RUN gradle :frontend:jsBrowserProductionWebpack --no-daemon
 
@@ -9,6 +10,7 @@ RUN gradle :frontend:jsBrowserProductionWebpack --no-daemon
 FROM gradle:8.12-jdk21 AS backend-build
 WORKDIR /app
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY gradle ./gradle
 COPY backend ./backend
 RUN gradle :backend:jar --no-daemon
 
