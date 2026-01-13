@@ -1,39 +1,39 @@
 # AWG Admin
 
-> Админ-панель для управления клиентами AmneziaWG VPN
+> Web admin panel for managing AmneziaWG VPN clients
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Kotlin-1.9-7F52FF?logo=kotlin" alt="Kotlin">
-  <img src="https://img.shields.io/badge/Ktor-2.3-087CFA?logo=ktor" alt="Ktor">
+  <img src="https://img.shields.io/badge/Kotlin-2.1-7F52FF?logo=kotlin" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Ktor-3.0-087CFA?logo=ktor" alt="Ktor">
   <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react" alt="React">
-  <img src="https://img.shields.io/badge/MUI-5-007FFF?logo=mui" alt="MUI">
+  <img src="https://img.shields.io/badge/MUI-6-007FFF?logo=mui" alt="MUI">
 </p>
 
-## 📋 Что это?
+## 📋 What is it?
 
-**AWG Admin** — это веб-панель для управления VPN-клиентами на сервере с установленным [AmneziaWG](https://amnezia.org/). Позволяет создавать, удалять и управлять клиентами через удобный интерфейс без необходимости работы с консолью.
+**AWG Admin** is a web panel for managing VPN clients on a server with [AmneziaWG](https://amnezia.org/) installed. It allows you to create, delete, and manage clients through a convenient interface without needing console access.
 
-## 🎯 Для чего?
+## 🎯 Use Cases
 
-- Управление VPN-клиентами без SSH доступа к серверу
-- Мониторинг online/offline статуса клиентов
-- Быстрое создание конфигов с QR-кодами для AmneziaVPN
-- Контроль срока действия сертификатов
-- Просмотр статистики трафика
+- Manage VPN clients without SSH access to the server
+- Monitor online/offline status of clients
+- Quickly create configs with QR codes for AmneziaVPN
+- Control certificate expiration dates
+- View traffic statistics
 
-## ✨ Возможности
+## ✨ Features
 
-| Функция                     | Описание                                       |
-|-----------------------------|------------------------------------------------|
-| 👥 **Управление клиентами** | Создание, удаление, включение/отключение       |
-| 📊 **Мониторинг**           | Online/offline статус, последний handshake     |
-| 📈 **Статистика**           | Входящий/исходящий трафик по клиентам          |
-| ⏰ **Срок действия**         | Установка даты истечения сертификата           |
-| 📱 **QR-коды**              | Генерация конфигов для AmneziaVPN              |
-| 📋 **Экспорт**              | Скачивание .conf файлов                        |
-| 🌙 **Dark UI**              | Современный тёмный интерфейс Material Design 3 |
+| Feature                  | Description                              |
+|--------------------------|------------------------------------------|
+| 👥 **Client Management** | Create, delete, enable/disable clients   |
+| 📊 **Monitoring**        | Online/offline status, last handshake    |
+| 📈 **Statistics**        | Incoming/outgoing traffic per client     |
+| ⏰ **Expiration**        | Set certificate expiration date          |
+| 📱 **QR Codes**          | Generate configs for AmneziaVPN app      |
+| 📋 **Export**            | Download .conf files                     |
+| 🌙 **Dark UI**           | Modern dark Material Design 3 interface  |
 
-## 🏗️ Архитектура
+## 🏗️ Architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -42,52 +42,54 @@
 │  (Frontend)     │     │  (REST API)     │     │  (awg/wg)       │
 │                 │     │                 │     │                 │
 └─────────────────┘     └────────┬────────┘     └─────────────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │                 │
-                        │  SQLite + ORM   │
-                        │  (Exposed)      │
-                        │                 │
-                        └─────────────────┘
+                                │
+                       ┌────────▼────────┐
+                       │                 │
+                       │  SQLite + ORM   │
+                       │  (Exposed)      │
+                       │                 │
+                       └─────────────────┘
 ```
 
-### Стек технологий
+### Tech Stack
 
-- **Backend:** Kotlin + Ktor (легковесный фреймворк)
+- **Backend:** Kotlin + Ktor (lightweight framework)
 - **Frontend:** Kotlin/JS + React + MUI (Material Design 3)
 - **Database:** SQLite + Exposed ORM
-- **WireGuard:** Абстракция через интерфейс (Shell/Mock)
+- **WireGuard:** Abstraction via interface (Shell/Mock)
 
-## 🚀 Как запускать
+All dependency versions are centralized in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
-### Требования
+## 🚀 Getting Started
 
-- Java 17+
-- AmneziaWG установлен и настроен (`awg`, `wg` в PATH)
-- Работающий интерфейс (например, `awg0`)
+### Requirements
+
+- Java 21+
+- AmneziaWG installed and configured (`awg`, `wg` in PATH)
+- Running interface (e.g., `awg0`)
 
 ### Production (Docker)
 
 ```bash
 cd docker
 
-# Настроить переменные
+# Configure environment
 export WG_INTERFACE=awg0
 export WG_ENDPOINT=your-server-ip
 
-# Запустить
+# Run
 docker-compose up -d
 ```
 
-Панель будет доступна на `http://localhost:8080`
+Panel will be available at `http://localhost:8080`
 
-### Production (без Docker)
+### Production (without Docker)
 
 ```bash
-# Сборка
+# Build
 ./scripts/build.sh
 
-# Запуск
+# Run
 export WG_INTERFACE=awg0
 export WG_ENDPOINT=$(curl -s ifconfig.me)
 java -jar backend/build/libs/backend.jar
@@ -96,10 +98,10 @@ java -jar backend/build/libs/backend.jar
 ### Development
 
 ```bash
-# Полный dev environment с Mock WireGuard
+# Full dev environment with Mock WireGuard
 ./scripts/run-dev-mock.sh
 
-# Или раздельно:
+# Or separately:
 # Terminal 1 - Backend
 ./scripts/run-backend-mock.sh
 
@@ -107,117 +109,117 @@ java -jar backend/build/libs/backend.jar
 ./scripts/run-frontend-dev.sh
 ```
 
-## ⚙️ Конфигурация
+## ⚙️ Configuration
 
-Все настройки через переменные окружения:
+All settings via environment variables:
 
-| Переменная      | Описание                    | Default               |
-|-----------------|-----------------------------|-----------------------|
-| `SERVER_PORT`   | Порт веб-сервера            | `8080`                |
-| `WG_INTERFACE`  | Имя WireGuard интерфейса    | `awg0`                |
-| `WG_ENDPOINT`   | Публичный IP/домен сервера  | `localhost`           |
-| `DATABASE_PATH` | Путь к SQLite базе          | `./data/awg-admin.db` |
-| `AWG_BINARY`    | Путь к awg binary           | `awg`                 |
-| `WG_BINARY`     | Путь к wg binary            | `wg`                  |
-| `DNS_SERVERS`   | DNS серверы для клиентов    | `1.1.1.1,8.8.8.8`     |
-| `USE_MOCK_WG`   | Использовать mock (для dev) | `false`               |
+| Variable        | Description                    | Default               |
+|-----------------|--------------------------------|-----------------------|
+| `SERVER_PORT`   | Web server port                | `8080`                |
+| `WG_INTERFACE`  | WireGuard interface name       | `awg0`                |
+| `WG_ENDPOINT`   | Server public IP/domain        | `localhost`           |
+| `DATABASE_PATH` | Path to SQLite database        | `./data/awg-admin.db` |
+| `AWG_BINARY`    | Path to awg binary             | `awg`                 |
+| `WG_BINARY`     | Path to wg binary              | `wg`                  |
+| `DNS_SERVERS`   | DNS servers for clients        | `1.1.1.1,8.8.8.8`     |
+| `USE_MOCK_WG`   | Use mock mode (for dev)        | `false`               |
 
-## 🔌 Как подключать
+## 🔌 Integration
 
-### 1. Подключение к существующему AmneziaWG
+### 1. Connecting to Existing AmneziaWG
 
-Убедитесь, что AmneziaWG работает:
+Make sure AmneziaWG is running:
 
 ```bash
 awg show
 ```
 
-Запустите панель с правильными параметрами:
+Run the panel with correct parameters:
 
 ```bash
-export WG_INTERFACE=awg0  # имя вашего интерфейса
-export WG_ENDPOINT=127.0.0.1  # IP вашего сервера
+export WG_INTERFACE=awg0  # your interface name
+export WG_ENDPOINT=127.0.0.1  # your server IP
 ./scripts/run-backend-dev.sh
 ```
 
 ### 2. API Endpoints
 
-| Method   | Endpoint                   | Описание                    |
-|----------|----------------------------|-----------------------------|
-| `GET`    | `/api/clients`             | Список клиентов со статусом |
-| `POST`   | `/api/clients`             | Создать клиента             |
-| `PATCH`  | `/api/clients/{id}`        | Обновить клиента            |
-| `DELETE` | `/api/clients/{id}`        | Удалить клиента             |
-| `POST`   | `/api/clients/{id}/toggle` | Включить/выключить          |
-| `GET`    | `/api/clients/{id}/config` | Получить конфиг             |
-| `GET`    | `/api/server/config`       | Конфиг сервера              |
-| `GET`    | `/api/server/obfuscation`  | Параметры обфускации        |
+| Method   | Endpoint                   | Description              |
+|----------|----------------------------|--------------------------|
+| `GET`    | `/api/clients`             | List clients with status |
+| `POST`   | `/api/clients`             | Create client            |
+| `PATCH`  | `/api/clients/{id}`        | Update client            |
+| `DELETE` | `/api/clients/{id}`        | Delete client            |
+| `POST`   | `/api/clients/{id}/toggle` | Enable/disable client    |
+| `GET`    | `/api/clients/{id}/config` | Get client config        |
+| `GET`    | `/api/server/config`       | Server config            |
+| `GET`    | `/api/server/obfuscation`  | Obfuscation parameters   |
 
-### 3. Пример API запроса
+### 3. API Example
 
 ```bash
-# Создать клиента
+# Create client
 curl -X POST http://localhost:8080/api/clients \
   -H "Content-Type: application/json" \
   -d '{"name": "Client", "expiresAt": "2025-12-31T00:00:00Z"}'
 
-# Получить конфиг
+# Get config
 curl http://localhost:8080/api/clients/{id}/config
 ```
 
-## 🔧 Как отлаживать
+## 🔧 Debugging
 
 ### Frontend (React + MUI)
 
 ```bash
-# Запустить с hot reload
+# Run with hot reload
 ./scripts/run-frontend-dev.sh
 
-# Открыть http://localhost:3000
-# Изменения применяются мгновенно
+# Open http://localhost:3000
+# Changes apply instantly
 ```
 
 **DevTools:**
 - React Developer Tools (Chrome/Firefox extension)
-- Network tab для отладки API запросов
-- Console для логов
+- Network tab for API debugging
+- Console for logs
 
 ### Backend (Ktor)
 
 ```bash
-# Запустить с mock WireGuard (без реального VPN)
+# Run with mock WireGuard (no real VPN)
 ./scripts/run-backend-mock.sh
 
-# Или с реальным WG
+# Or with real WG
 ./scripts/run-backend-dev.sh
 ```
 
-**Логирование:**
-- Логи выводятся в консоль
-- Уровень логирования настраивается в `logback.xml`
-- Ошибки WireGuard выводятся в stderr
+**Logging:**
+- Logs output to console
+- Log level configurable in `logback.xml`
+- WireGuard errors output to stderr
 
-### Полная отладка
+### Full Debug Setup
 
 ```bash
-# Запустить всё в tmux
+# Run everything in tmux
 ./scripts/run-dev-mock.sh
 
-# Переключение между окнами: Ctrl+B, затем 0 или 1
-# Отсоединиться: Ctrl+B, затем D
-# Присоединиться: tmux attach -t awg-dev
+# Switch windows: Ctrl+B, then 0 or 1
+# Detach: Ctrl+B, then D
+# Attach: tmux attach -t awg-dev
 ```
 
-### Mock режим
+### Mock Mode
 
-При `USE_MOCK_WG=true`:
-- Клиенты создаются в базе, но не добавляются в WireGuard
-- Online/offline статус генерируется случайно
-- Трафик симулируется
-- Ключи генерируются фейковые
+When `USE_MOCK_WG=true`:
+- Clients are created in database but not added to WireGuard
+- Online/offline status is randomly generated
+- Traffic is simulated
+- Keys are generated as fake
 
-Это позволяет отлаживать UI без настроенного VPN.
+This allows debugging UI without a configured VPN.
 
-## 📄 Лицензия
+## 📄 License
 
 MIT
