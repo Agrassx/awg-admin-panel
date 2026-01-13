@@ -1,19 +1,19 @@
 # Build stage - Frontend
-FROM gradle:8.5-jdk17 AS frontend-build
+FROM gradle:8.12-jdk21 AS frontend-build
 WORKDIR /app
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY frontend ./frontend
 RUN gradle :frontend:jsBrowserProductionWebpack --no-daemon
 
 # Build stage - Backend
-FROM gradle:8.5-jdk17 AS backend-build
+FROM gradle:8.12-jdk21 AS backend-build
 WORKDIR /app
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY backend ./backend
 RUN gradle :backend:jar --no-daemon
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 RUN apk add --no-cache bash curl
 
