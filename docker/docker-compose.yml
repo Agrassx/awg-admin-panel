@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  awg-admin:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: awg-admin
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - SERVER_PORT=8080
+      - WG_INTERFACE=${WG_INTERFACE:-awg0}
+      - WG_ENDPOINT=${WG_ENDPOINT:-localhost}
+      - DATABASE_PATH=/app/data/awg-admin.db
+      - AWG_BINARY=/usr/bin/awg
+      - WG_BINARY=/usr/bin/wg
+      - DNS_SERVERS=1.1.1.1,8.8.8.8
+    volumes:
+      - awg-admin-data:/app/data
+      - /usr/bin/awg:/usr/bin/awg:ro
+      - /usr/bin/wg:/usr/bin/wg:ro
+      - /var/run/wireguard:/var/run/wireguard
+
+volumes:
+  awg-admin-data:
