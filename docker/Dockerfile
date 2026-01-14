@@ -1,32 +1,28 @@
-# Build stage - Frontend
-FROM gradle:8.12-jdk21 AS frontend-build
+# Build stage - single stage with both frontend and backend
+FROM gradle:8.12-jdk21 AS build
 WORKDIR /app
+
+# Copy all project files
 COPY settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle ./gradle
 COPY frontend ./frontend
-RUN gradle :frontend:jsBrowserProductionWebpack --no-daemon
-
-# Build stage - Backend
-FROM gradle:8.12-jdk21 AS backend-build
-WORKDIR /app
-COPY settings.gradle.kts build.gradle.kts gradle.properties ./
-COPY gradle ./gradle
 COPY backend ./backend
+
+# Build backend JAR (includes frontend via processResources)
 RUN gradle :backend:jar --no-daemon
 
-# Runtime stage
-FROM eclipse-temurin:21-jre-alpine
+# Runtime stage - using Debian-based image for glibc compatibility with awg/wg binaries
+FROM eclipse-temurin:21-jre
 
-RUN apk add --no-cache bash curl
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy backend jar
-COPY --from=backend-build /app/backend/build/libs/*.jar app.jar
-
-# Copy frontend static files (JS bundle + HTML)
-COPY --from=frontend-build /app/frontend/build/kotlin-webpack/js/productionExecutable/ ./static/
-COPY --from=frontend-build /app/frontend/build/processedResources/js/main/ ./static/
+# Copy backend jar (contains frontend static files)
+COPY --from=build /app/backend/build/libs/*.jar app.jar
 
 # Create data directory
 RUN mkdir -p /app/data

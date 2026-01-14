@@ -6,15 +6,11 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-echo "Building frontend..."
-./gradlew :frontend:jsBrowserProductionWebpack
-
-echo "Building backend..."
+echo "Building application (frontend + backend)..."
 ./gradlew :backend:jar
 
-echo "Copying frontend to backend resources..."
-mkdir -p backend/build/resources/main/static
-cp -r frontend/build/dist/js/productionExecutable/* backend/build/resources/main/static/
-
+echo ""
 echo "Build complete!"
+echo "JAR location: backend/build/libs/backend.jar"
+echo ""
 echo "Run with: java -jar backend/build/libs/backend.jar"

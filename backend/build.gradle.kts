@@ -27,6 +27,18 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+// Copy frontend build output to backend resources
+tasks.processResources {
+    dependsOn(":frontend:jsBrowserProductionWebpack")
+    
+    from(project(":frontend").layout.buildDirectory.dir("kotlin-webpack/js/productionExecutable")) {
+        into("static")
+    }
+    from(project(":frontend").layout.buildDirectory.dir("processedResources/js/main")) {
+        into("static")
+    }
+}
+
 tasks.jar {
     manifest {
         attributes["Main-Class"] = "org.awgadmin.ApplicationKt"
