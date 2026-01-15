@@ -9,6 +9,7 @@ kotlin-wrappers = "1.0.0-pre.850"
 detekt = "1.23.7"
 logback = "1.5.12"
 sqlite = "3.47.1.0"
+bcrypt = "0.10.2"
 
 [libraries]
 # Ktor Server
@@ -18,7 +19,12 @@ ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negoti
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-host-common = { module = "io.ktor:ktor-server-host-common", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+ktor-server-sessions = { module = "io.ktor:ktor-server-sessions", version.ref = "ktor" }
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# Security
+bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }
 
 # Ktor Client
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -56,6 +62,8 @@ ktor-server = [
     "ktor-server-cors",
     "ktor-server-status-pages",
     "ktor-server-host-common",
+    "ktor-server-auth",
+    "ktor-server-sessions",
     "ktor-serialization-json"
 ]
 ktor-client = [

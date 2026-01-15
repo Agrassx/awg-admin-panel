@@ -35,6 +35,7 @@ ENV DATABASE_PATH=/app/data/awg-admin.db
 ENV AWG_BINARY=/usr/bin/awg
 ENV WG_BINARY=/usr/bin/wg
 ENV DNS_SERVERS=1.1.1.1,8.8.8.8
+ENV SESSION_SECRET=""
 
 EXPOSE 8080
 

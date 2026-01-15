@@ -120,7 +120,7 @@ fun Route.clientRoutes(clientService: ClientService) {
         }
     }
 
-    route("/api/server") {
+    route("/server") {
         get("/config") {
             val config = clientService.getServerConfig()
             call.respond(config)

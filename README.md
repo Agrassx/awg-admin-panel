@@ -109,20 +109,74 @@ java -jar backend/build/libs/backend.jar
 ./scripts/run-frontend-dev.sh
 ```
 
+## 🔐 Security & Authentication
+
+### First Run
+
+On first startup, the panel automatically generates a secure admin password:
+
+```
+======================================================================
+  FIRST RUN - Admin credentials generated
+======================================================================
+  Username: admin
+  Password: ABcd1234!@#$efGH5678%&*
+======================================================================
+  SAVE THIS PASSWORD! It will not be shown again.
+  You can also find it in the container logs: docker logs <container>
+======================================================================
+```
+
+**Important:** Save this password immediately! It won't be displayed again.
+
+### Security Features
+
+| Feature                    | Description                                           |
+|----------------------------|-------------------------------------------------------|
+| **BCrypt Password Hashing**| Passwords are hashed with BCrypt (cost factor 12)     |
+| **Brute-force Protection** | 5 failed attempts = 15 minute lockout per IP          |
+| **Secure Session Cookies** | HttpOnly, SameSite=Strict, HMAC-signed                |
+| **No Default Passwords**   | Random 24-character password generated on first run   |
+
+### Finding the Generated Password
+
+```bash
+# Docker
+docker logs awg-admin-panel 2>&1 | grep -A5 "FIRST RUN"
+
+# Without Docker
+# Check the application startup logs
+```
+
+### Resetting Password
+
+If you lose the admin password, delete the database file and restart:
+
+```bash
+# Docker
+docker exec awg-admin-panel rm /app/data/awg-admin.db
+docker restart awg-admin-panel
+
+# Without Docker
+rm ./data/awg-admin.db
+# Restart the application
+```
+
 ## ⚙️ Configuration
 
 All settings via environment variables:
 
-| Variable        | Description                    | Default               |
-|-----------------|--------------------------------|-----------------------|
-| `SERVER_PORT`   | Web server port                | `8080`                |
-| `WG_INTERFACE`  | WireGuard interface name       | `awg0`                |
-| `WG_ENDPOINT`   | Server public IP/domain        | `localhost`           |
-| `DATABASE_PATH` | Path to SQLite database        | `./data/awg-admin.db` |
-| `AWG_BINARY`    | Path to awg binary             | `awg`                 |
-| `WG_BINARY`     | Path to wg binary              | `wg`                  |
-| `DNS_SERVERS`   | DNS servers for clients        | `1.1.1.1,8.8.8.8`     |
-| `USE_MOCK_WG`   | Use mock mode (for dev)        | `false`               |
+| Variable         | Description                    | Default               |
+|------------------|--------------------------------|-----------------------|
+| `SERVER_PORT`    | Web server port                | `8080`                |
+| `WG_INTERFACE`   | WireGuard interface name       | `awg0`                |
+| `WG_ENDPOINT`    | Server public IP/domain        | `localhost`           |
+| `DATABASE_PATH`  | Path to SQLite database        | `./data/awg-admin.db` |
+| `AWG_BINARY`     | Path to awg binary             | `awg`                 |
+| `WG_BINARY`      | Path to wg binary              | `wg`                  |
+| `DNS_SERVERS`    | DNS servers for clients        | `1.1.1.1,8.8.8.8`     |
+| `USE_MOCK_WG`    | Use mock mode (for dev)        | `false`               |
+| `SESSION_SECRET` | Secret for signing sessions    | (random on each start)|
 
 ## 🔌 Integration
 
@@ -143,6 +197,17 @@ export WG_ENDPOINT=127.0.0.1  # your server IP
 ```
 
 ### 2. API Endpoints
+
+**Authentication (public):**
+
+| Method   | Endpoint                   | Description              |
+|----------|----------------------------|--------------------------|
+| `POST`   | `/api/auth/login`          | Login with credentials   |
+| `POST`   | `/api/auth/logout`         | Logout current session   |
+| `GET`    | `/api/auth/me`             | Check current session    |
+| `POST`   | `/api/auth/change-password`| Change password          |
+
+**Clients (requires authentication):**
 
 | Method   | Endpoint                   | Description              |
 |----------|----------------------------|--------------------------|

@@ -38,3 +38,22 @@ data class ServerConfigDto(
     val subnet: String,
     val dns: List<String>,
 )
+
+// Auth models
+@Serializable
+data class LoginRequest(
+    val username: String,
+    val password: String,
+)
+
+@Serializable
+data class AuthResponse(
+    val success: Boolean,
+    val username: String? = null,
+    val message: String? = null,
+)
+
+@Serializable
+data class ChangePasswordRequest(
+    val newPassword: String,
+)

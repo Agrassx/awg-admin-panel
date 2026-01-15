@@ -12,6 +12,7 @@ data class AppConfig(
     val wgBinary: String,
     val dns: List<String>,
     val useMockWg: Boolean,
+    val sessionSecret: String,
 ) {
     companion object {
         fun fromEnv(): AppConfig = AppConfig(
@@ -23,6 +24,7 @@ data class AppConfig(
             wgBinary = env("WG_BINARY", "wg"),
             dns = env("DNS_SERVERS", "1.1.1.1,8.8.8.8").split(","),
             useMockWg = env("USE_MOCK_WG", "false").toBoolean(),
+            sessionSecret = env("SESSION_SECRET", ""),
         )
 
         private fun env(name: String, default: String): String =

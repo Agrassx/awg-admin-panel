@@ -18,7 +18,11 @@ object DatabaseFactory {
         Database.connect(url, driver)
 
         transaction {
-            SchemaUtils.create(ClientTable)
+            SchemaUtils.create(
+                ClientTable,
+                UserTable,
+                LoginAttemptTable,
+            )
         }
     }
 

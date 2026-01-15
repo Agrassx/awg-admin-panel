@@ -20,6 +20,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.datetime)
 
+    // Security
+    implementation(libs.bcrypt)
+
     // Logging
     implementation(libs.logback)
 

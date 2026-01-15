@@ -8,9 +8,11 @@ import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.browser.window
 import kotlinx.serialization.json.Json
@@ -30,6 +32,38 @@ object ApiClient {
         }
     }
 
+    // Auth methods
+    suspend fun login(username: String, password: String): AuthResponse {
+        val response: HttpResponse = client.post("$baseUrl/api/auth/login") {
+            contentType(ContentType.Application.Json)
+            setBody(LoginRequest(username, password))
+        }
+        return response.body()
+    }
+
+    suspend fun logout(): AuthResponse =
+        client.post("$baseUrl/api/auth/logout").body()
+
+    suspend fun checkAuth(): AuthResponse? {
+        return try {
+            val response: HttpResponse = client.get("$baseUrl/api/auth/me")
+            if (response.status.isSuccess()) {
+                response.body()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun changePassword(newPassword: String): AuthResponse =
+        client.post("$baseUrl/api/auth/change-password") {
+            contentType(ContentType.Application.Json)
+            setBody(ChangePasswordRequest(newPassword))
+        }.body()
+
+    // Client methods
     suspend fun getClients(): List<ClientDto> =
         client.get("$baseUrl/api/clients").body()
 
