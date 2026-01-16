@@ -84,19 +84,25 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run --rm -d --name test-container \
+          # Start container (without --rm to preserve logs on crash)
+          docker run -d --name test-container \
             -e USE_MOCK_WG=true \
             -p 8080:8080 \
             ${{ env.REGISTRY }}/${{ steps.vars.outputs.image_name }}:${{ steps.branch.outputs.name }}-${{ steps.vars.outputs.short_sha }}
           
           # Wait for container to start (JVM needs more time)
           echo "Waiting for container to start..."
+          sleep 5
+          
           READY=false
           for i in {1..30}; do
             # Check if container is still running
             if ! docker ps | grep -q test-container; then
-              echo "Container crashed!"
+              echo "Container crashed! Showing logs:"
+              echo "=== Container logs ==="
               docker logs test-container 2>&1 || true
+              echo "======================"
+              docker rm test-container 2>/dev/null || true
               exit 1
             fi
             
@@ -116,6 +122,8 @@ jobs:
           
           if [ "$READY" = "false" ]; then
             echo "Container failed to start in time"
+            docker stop test-container 2>/dev/null || true
+            docker rm test-container 2>/dev/null || true
             exit 1
           fi
           
@@ -127,11 +135,14 @@ jobs:
             echo "Container is healthy!"
           else
             echo "Container health check failed with HTTP $HTTP_CODE"
+            docker stop test-container 2>/dev/null || true
+            docker rm test-container 2>/dev/null || true
             exit 1
           fi
           
           # Cleanup
           docker stop test-container
+          docker rm test-container
 
       - name: Push to registry (main branch)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
