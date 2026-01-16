@@ -22,6 +22,7 @@ object DatabaseFactory {
                 ClientTable,
                 UserTable,
                 LoginAttemptTable,
+                SettingsTable,
             )
         }
     }

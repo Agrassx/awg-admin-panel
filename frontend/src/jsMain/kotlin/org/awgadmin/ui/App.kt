@@ -6,17 +6,20 @@ import mui.material.Box
 import mui.material.CircularProgress
 import mui.material.Container
 import mui.material.CssBaseline
+import mui.material.Tab
+import mui.material.Tabs
 import mui.material.Typography
 import mui.material.styles.ThemeProvider
 import mui.system.sx
 import org.awgadmin.api.ApiClient
 import org.awgadmin.api.ClientDto
 import org.awgadmin.components.AddClientDialog
-import org.awgadmin.components.ChangePasswordDialog
 import org.awgadmin.components.ClientCard
 import org.awgadmin.components.ClientConfigDialog
 import org.awgadmin.components.Header
 import org.awgadmin.components.LoginPage
+import org.awgadmin.components.ProfilePage
+import org.awgadmin.components.SettingsPage
 import react.FC
 import react.Props
 import react.useEffectOnce
@@ -40,13 +43,22 @@ sealed class AuthState {
     data class Authenticated(val username: String) : AuthState()
 }
 
+/**
+ * Navigation tabs.
+ */
+enum class AppTab {
+    CLIENTS,
+    SETTINGS,
+    PROFILE
+}
+
 val App = FC<Props> {
     var authState by useState<AuthState>(AuthState.Loading)
+    var activeTab by useState(AppTab.CLIENTS)
     var clients by useState<List<ClientDto>>(emptyList())
     var loading by useState(true)
     var error by useState<String?>(null)
     var showAddDialog by useState(false)
-    var showChangePasswordDialog by useState(false)
     var configDialogClient by useState<ClientDto?>(null)
 
     fun loadClients() {
@@ -141,78 +153,97 @@ val App = FC<Props> {
                         username = state.username
                         onAddClick = { showAddDialog = true }
                         onRefreshClick = { loadClients() }
-                        onChangePasswordClick = { showChangePasswordDialog = true }
                         onLogoutClick = { handleLogout() }
+                        currentTab = activeTab
+                        onTabChange = { tab -> activeTab = tab }
                     }
 
-                    Container {
-                        maxWidth = "lg"
-                        sx {
-                            paddingTop = 32.px
-                            paddingBottom = 32.px
-                        }
-
-                        if (loading) {
-                            Box {
+                    // Tab content
+                    when (activeTab) {
+                        AppTab.CLIENTS -> {
+                            Container {
+                                maxWidth = "lg"
                                 sx {
-                                    display = Display.flex
-                                    justifyContent = JustifyContent.center
-                                    padding = 48.px
-                                }
-                                CircularProgress {}
-                            }
-                        }
-
-                        error?.let { err ->
-                            Typography {
-                                sx { color = "error.main".asDynamic() }
-                                +"Error: $err"
-                            }
-                        }
-
-                        if (!loading) {
-                            Box {
-                                sx {
-                                    display = Display.flex
-                                    flexWrap = FlexWrap.wrap
-                                    gap = 16.px
+                                    paddingTop = 32.px
+                                    paddingBottom = 32.px
                                 }
 
-                                clients.forEach { client ->
-                                    ClientCard {
-                                        this.client = client
-                                        onToggle = {
-                                            scope.launch {
-                                                ApiClient.toggleClient(client.id)
-                                                loadClients()
-                                            }
-                                        }
-                                        onDelete = {
-                                            scope.launch {
-                                                ApiClient.deleteClient(client.id)
-                                                loadClients()
-                                            }
-                                        }
-                                        onShowConfig = {
-                                            configDialogClient = client
-                                        }
-                                    }
-                                }
-
-                                if (clients.isEmpty()) {
+                                if (loading) {
                                     Box {
                                         sx {
-                                            width = 100.pct
+                                            display = Display.flex
+                                            justifyContent = JustifyContent.center
                                             padding = 48.px
                                         }
-                                        Typography {
-                                            sx {
-                                                textAlign = "center".asDynamic()
-                                                color = "text.secondary".asDynamic()
+                                        CircularProgress {}
+                                    }
+                                }
+
+                                error?.let { err ->
+                                    Typography {
+                                        sx { color = "error.main".asDynamic() }
+                                        +"Error: $err"
+                                    }
+                                }
+
+                                if (!loading) {
+                                    Box {
+                                        sx {
+                                            display = Display.flex
+                                            flexWrap = FlexWrap.wrap
+                                            gap = 16.px
+                                        }
+
+                                        clients.forEach { client ->
+                                            ClientCard {
+                                                this.client = client
+                                                onToggle = {
+                                                    scope.launch {
+                                                        ApiClient.toggleClient(client.id)
+                                                        loadClients()
+                                                    }
+                                                }
+                                                onDelete = {
+                                                    scope.launch {
+                                                        ApiClient.deleteClient(client.id)
+                                                        loadClients()
+                                                    }
+                                                }
+                                                onShowConfig = {
+                                                    configDialogClient = client
+                                                }
                                             }
-                                            +"No clients yet. Click + to add one."
+                                        }
+
+                                        if (clients.isEmpty()) {
+                                            Box {
+                                                sx {
+                                                    width = 100.pct
+                                                    padding = 48.px
+                                                }
+                                                Typography {
+                                                    sx {
+                                                        textAlign = "center".asDynamic()
+                                                        color = "text.secondary".asDynamic()
+                                                    }
+                                                    +"No clients yet. Click + to add one."
+                                                }
+                                            }
                                         }
                                     }
+                                }
+                            }
+                        }
+
+                        AppTab.SETTINGS -> {
+                            SettingsPage {}
+                        }
+
+                        AppTab.PROFILE -> {
+                            ProfilePage {
+                                username = state.username
+                                onPasswordChanged = {
+                                    // Password changed successfully
                                 }
                             }
                         }
@@ -226,13 +257,6 @@ val App = FC<Props> {
                             showAddDialog = false
                             loadClients()
                         }
-                    }
-                }
-
-                if (showChangePasswordDialog) {
-                    ChangePasswordDialog {
-                        onClose = { showChangePasswordDialog = false }
-                        onSuccess = { showChangePasswordDialog = false }
                     }
                 }
 

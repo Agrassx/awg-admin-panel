@@ -91,4 +91,23 @@ object ApiClient {
 
     suspend fun getServerConfig(): ServerConfigDto =
         client.get("$baseUrl/api/server/config").body()
+
+    // Settings methods
+    suspend fun getSettings(): SettingsResponse =
+        client.get("$baseUrl/api/settings").body()
+
+    suspend fun updateObfuscation(request: UpdateObfuscationRequest): SuccessResponse =
+        client.patch("$baseUrl/api/settings/obfuscation") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+
+    suspend fun updateNetwork(request: UpdateNetworkRequest): SuccessResponse =
+        client.patch("$baseUrl/api/settings/network") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+
+    suspend fun getServerStatus(): ServerStatus =
+        client.get("$baseUrl/api/settings/status").body()
 }

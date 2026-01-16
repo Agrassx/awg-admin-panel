@@ -43,10 +43,13 @@ import org.awgadmin.network.MockWgInterface
 import org.awgadmin.network.ShellWgInterface
 import org.awgadmin.network.WgCommandException
 import org.awgadmin.network.WgInterface
+import org.awgadmin.data.SettingsRepository
+import org.awgadmin.domain.SettingsService
 import org.awgadmin.routes.ErrorResponse
 import org.awgadmin.routes.AuthResponse
 import org.awgadmin.routes.LoginRequest
 import org.awgadmin.routes.clientRoutes
+import org.awgadmin.routes.settingsRoutes
 import java.io.File
 import java.security.SecureRandom
 
@@ -106,7 +109,9 @@ fun main() {
 
     // Create services
     val clientRepository = ClientRepository()
+    val settingsRepository = SettingsRepository()
     val clientService = ClientService(clientRepository, wgInterface)
+    val settingsService = SettingsService(config, wgInterface, settingsRepository)
 
     println("[INFO] Starting AWG Admin on port ${config.serverPort}")
 
@@ -120,13 +125,14 @@ fun main() {
     embeddedServer(
         Netty,
         port = config.serverPort,
-        module = { configureApp(clientService, authService, config) },
+        module = { configureApp(clientService, authService, settingsService, config) },
     ).start(wait = true)
 }
 
 fun Application.configureApp(
     clientService: ClientService,
     authService: AuthService,
+    settingsService: SettingsService,
     config: AppConfig,
 ) {
     // Generate session signing key from secret
@@ -296,6 +302,7 @@ fun Application.configureApp(
         // Protected API routes - require authentication
         authenticate("auth-session") {
             clientRoutes(clientService)
+            settingsRoutes(settingsService)
         }
 
         // Static resources (frontend) - fallback for non-API routes

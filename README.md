@@ -31,6 +31,9 @@
 | ⏰ **Expiration**        | Set certificate expiration date          |
 | 📱 **QR Codes**          | Generate configs for AmneziaVPN app      |
 | 📋 **Export**            | Download .conf files                     |
+| ⚙️ **Settings Page**     | Configure AWG obfuscation parameters     |
+| 👤 **Profile Page**      | User profile and password management     |
+| 🔐 **Security**          | Brute-force protection, secure sessions  |
 | 🌙 **Dark UI**           | Modern dark Material Design 3 interface  |
 
 ## 🏗️ Architecture
@@ -149,6 +152,27 @@ java -jar backend/build/libs/backend.jar
 ./scripts/run-frontend-dev.sh
 ```
 
+## 🖥️ User Interface
+
+The admin panel has three main pages accessible via tabs:
+
+### Clients Page
+- View all VPN clients with status (online/offline)
+- Create new clients with optional expiration date
+- Enable/disable clients
+- Download client config files
+- View traffic statistics per client
+
+### Settings Page
+- **Server Status:** Running state, active peers, total traffic
+- **Server Information:** Interface name, endpoint, public key
+- **AmneziaWG Obfuscation:** Configure Jc, Jmin, Jmax, S1, S2, H1-H4 parameters
+- **Network Settings:** Server address (CIDR), DNS servers
+
+### Profile Page
+- View current username
+- Change password (minimum 12 characters)
+
 ## 🔐 Security & Authentication
 
 ### First Run
@@ -177,6 +201,18 @@ On first startup, the panel automatically generates a secure admin password:
 | **Brute-force Protection** | 5 failed attempts = 15 minute lockout per IP          |
 | **Secure Session Cookies** | HttpOnly, SameSite=Strict, HMAC-signed                |
 | **No Default Passwords**   | Random 24-character password generated on first run   |
+| **Security Headers**       | X-Frame-Options, X-XSS-Protection, CSP, HSTS          |
+| **CORS Protection**        | Configurable allowed origins in production            |
+
+### Production Security Settings
+
+| Variable          | Default   | Description                                    |
+|-------------------|-----------|------------------------------------------------|
+| `PRODUCTION`      | `false`   | Enable production security hardening           |
+| `SECURE_COOKIES`  | `false`   | Use Secure flag on cookies (requires HTTPS)    |
+| `ALLOWED_ORIGINS` | `""`      | CORS whitelist (comma-separated)               |
+| `TRUST_PROXY`     | `true`    | Trust X-Forwarded-For header                   |
+| `SESSION_SECRET`  | (random)  | Session signing key (generate with `openssl rand -base64 32`) |
 
 ### Finding the Generated Password
 
@@ -259,6 +295,15 @@ export WG_ENDPOINT=127.0.0.1  # your server IP
 | `GET`    | `/api/clients/{id}/config` | Get client config        |
 | `GET`    | `/api/server/config`       | Server config            |
 | `GET`    | `/api/server/obfuscation`  | Obfuscation parameters   |
+
+**Settings (requires authentication):**
+
+| Method   | Endpoint                      | Description                |
+|----------|-------------------------------|----------------------------|
+| `GET`    | `/api/settings`               | Get all settings           |
+| `PATCH`  | `/api/settings/obfuscation`   | Update obfuscation params  |
+| `PATCH`  | `/api/settings/network`       | Update network settings    |
+| `GET`    | `/api/settings/status`        | Get server status          |
 
 ### 3. API Example
 

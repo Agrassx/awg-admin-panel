@@ -57,3 +57,74 @@ data class AuthResponse(
 data class ChangePasswordRequest(
     val newPassword: String,
 )
+
+// Settings models
+@Serializable
+data class SettingsResponse(
+    val server: ServerSettings,
+    val obfuscation: ObfuscationSettings,
+    val network: NetworkSettings,
+)
+
+@Serializable
+data class ServerSettings(
+    val interfaceName: String,
+    val publicKey: String,
+    val endpoint: String,
+    val listenPort: Int,
+)
+
+@Serializable
+data class ObfuscationSettings(
+    val jc: Int,
+    val jmin: Int,
+    val jmax: Int,
+    val s1: Int,
+    val s2: Int,
+    val h1: Long,
+    val h2: Long,
+    val h3: Long,
+    val h4: Long,
+)
+
+@Serializable
+data class NetworkSettings(
+    val address: String,
+    val dns: List<String>,
+    val allowedIps: String,
+)
+
+@Serializable
+data class UpdateObfuscationRequest(
+    val jc: Int? = null,
+    val jmin: Int? = null,
+    val jmax: Int? = null,
+    val s1: Int? = null,
+    val s2: Int? = null,
+    val h1: Long? = null,
+    val h2: Long? = null,
+    val h3: Long? = null,
+    val h4: Long? = null,
+)
+
+@Serializable
+data class UpdateNetworkRequest(
+    val address: String? = null,
+    val dns: List<String>? = null,
+)
+
+@Serializable
+data class ServerStatus(
+    val isRunning: Boolean,
+    val interfaceName: String,
+    val uptime: String? = null,
+    val peersCount: Int,
+    val transferRx: Long,
+    val transferTx: Long,
+    val lastHandshake: String? = null,
+)
+
+@Serializable
+data class SuccessResponse(
+    val message: String,
+)
