@@ -3,6 +3,7 @@ package org.awgadmin.network
 import java.io.BufferedReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.awgadmin.config.ObfuscationConfig
 import org.awgadmin.domain.ObfuscationParams
 import org.awgadmin.domain.ServerConfig
 
@@ -15,37 +16,45 @@ class ShellWgInterface(
     private val awgBinary: String = "awg",
     private val wgBinary: String = "wg",
     private val serverEndpoint: String,
+    private val serverPort: Int = 51820,
+    private val serverAddress: String = "10.0.0.1/24",
     private val dns: List<String> = listOf("1.1.1.1", "8.8.8.8"),
+    private val obfuscation: ObfuscationConfig = ObfuscationConfig.fromEnv(),
 ) : WgInterface {
 
     override suspend fun getServerConfig(): ServerConfig {
         val output = executeCommand("$awgBinary show $interfaceName")
         val publicKey = extractValue(output, "public key")
-        val listenPort = extractValue(output, "listening port").toIntOrNull() ?: 443
+        val listenPort = extractValue(output, "listening port").toIntOrNull() ?: serverPort
 
         return ServerConfig(
             interfaceName = interfaceName,
             publicKey = publicKey,
             listenPort = listenPort,
             endpoint = serverEndpoint,
-            subnet = "10.66.66.0/24",
+            subnet = serverAddress,
             dns = dns,
         )
     }
 
     override suspend fun getObfuscationParams(): ObfuscationParams {
-        val output = executeCommand("$awgBinary show $interfaceName")
+        // Try to read from interface, fallback to config
+        val output = try {
+            executeCommand("$awgBinary show $interfaceName")
+        } catch (e: Exception) {
+            ""
+        }
 
         return ObfuscationParams(
-            jc = extractValue(output, "jc").toIntOrNull() ?: 0,
-            jmin = extractValue(output, "jmin").toIntOrNull() ?: 0,
-            jmax = extractValue(output, "jmax").toIntOrNull() ?: 0,
-            s1 = extractValue(output, "s1").toIntOrNull() ?: 0,
-            s2 = extractValue(output, "s2").toIntOrNull() ?: 0,
-            h1 = extractValue(output, "h1").toLongOrNull() ?: 0L,
-            h2 = extractValue(output, "h2").toLongOrNull() ?: 0L,
-            h3 = extractValue(output, "h3").toLongOrNull() ?: 0L,
-            h4 = extractValue(output, "h4").toLongOrNull() ?: 0L,
+            jc = extractValue(output, "jc").toIntOrNull() ?: obfuscation.jc,
+            jmin = extractValue(output, "jmin").toIntOrNull() ?: obfuscation.jmin,
+            jmax = extractValue(output, "jmax").toIntOrNull() ?: obfuscation.jmax,
+            s1 = extractValue(output, "s1").toIntOrNull() ?: obfuscation.s1,
+            s2 = extractValue(output, "s2").toIntOrNull() ?: obfuscation.s2,
+            h1 = extractValue(output, "h1").toLongOrNull() ?: obfuscation.h1,
+            h2 = extractValue(output, "h2").toLongOrNull() ?: obfuscation.h2,
+            h3 = extractValue(output, "h3").toLongOrNull() ?: obfuscation.h3,
+            h4 = extractValue(output, "h4").toLongOrNull() ?: obfuscation.h4,
         )
     }
 

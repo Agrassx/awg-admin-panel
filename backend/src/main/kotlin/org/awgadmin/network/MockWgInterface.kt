@@ -3,6 +3,7 @@ package org.awgadmin.network
 import java.security.SecureRandom
 import java.util.Base64
 import kotlinx.coroutines.delay
+import org.awgadmin.config.ObfuscationConfig
 import org.awgadmin.domain.ObfuscationParams
 import org.awgadmin.domain.ServerConfig
 
@@ -12,20 +13,24 @@ import org.awgadmin.domain.ServerConfig
  */
 class MockWgInterface(
     private val serverEndpoint: String = "localhost",
+    private val serverPort: Int = 51820,
+    private val serverAddress: String = "10.0.0.1/24",
     private val dns: List<String> = listOf("1.1.1.1", "8.8.8.8"),
+    private val obfuscation: ObfuscationConfig = ObfuscationConfig.fromEnv(),
 ) : WgInterface {
 
     private val peers = mutableMapOf<String, MockPeer>()
     private val random = SecureRandom()
+    private val mockServerPublicKey = generateRandomKey()
 
     override suspend fun getServerConfig(): ServerConfig {
         delay(50) // Simulate network delay
         return ServerConfig(
             interfaceName = "awg0-mock",
-            publicKey = "MockServerPublicKey123456789012345678901234=",
-            listenPort = 443,
+            publicKey = mockServerPublicKey,
+            listenPort = serverPort,
             endpoint = serverEndpoint,
-            subnet = "10.66.66.0/24",
+            subnet = serverAddress,
             dns = dns,
         )
     }
@@ -33,15 +38,15 @@ class MockWgInterface(
     override suspend fun getObfuscationParams(): ObfuscationParams {
         delay(50)
         return ObfuscationParams(
-            jc = 8,
-            jmin = 40,
-            jmax = 1000,
-            s1 = 89,
-            s2 = 117,
-            h1 = 1735261843L,
-            h2 = 983742156L,
-            h3 = 572849301L,
-            h4 = 294817365L,
+            jc = obfuscation.jc,
+            jmin = obfuscation.jmin,
+            jmax = obfuscation.jmax,
+            s1 = obfuscation.s1,
+            s2 = obfuscation.s2,
+            h1 = obfuscation.h1,
+            h2 = obfuscation.h2,
+            h3 = obfuscation.h3,
+            h4 = obfuscation.h4,
         )
     }
 

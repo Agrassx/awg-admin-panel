@@ -68,20 +68,60 @@ All dependency versions are centralized in [`gradle/libs.versions.toml`](gradle/
 - AmneziaWG installed and configured (`awg`, `wg` in PATH)
 - Running interface (e.g., `awg0`)
 
-### Production (Docker)
+### Production (Docker) - Recommended
+
+The Docker image includes AmneziaWG compiled from source. Just run:
 
 ```bash
-cd docker
+# Quick start - copy docker-compose.yml and run:
+curl -o docker-compose.yml https://raw.githubusercontent.com/Agrassx/awg-admin-panel/main/docker-compose.yml
 
-# Configure environment
-export WG_INTERFACE=awg0
-export WG_ENDPOINT=your-server-ip
+# Edit WG_ENDPOINT to your server's public IP
+nano docker-compose.yml
 
 # Run
 docker-compose up -d
+
+# Check logs for admin password
+docker-compose logs app | grep -A5 "FIRST RUN"
 ```
 
-Panel will be available at `http://localhost:8080`
+Or with docker run:
+
+```bash
+docker run -d --name awg-admin \
+  --cap-add=NET_ADMIN \
+  --cap-add=SYS_MODULE \
+  -v /dev/net/tun:/dev/net/tun \
+  -v awg-data:/app/data \
+  -v awg-config:/etc/amnezia/amneziawg \
+  -e WG_ENDPOINT=YOUR_SERVER_IP \
+  -e WG_PORT=51820 \
+  --network host \
+  ghcr.io/agrassx/awg-admin-panel:main
+
+# Get admin password
+docker logs awg-admin | grep -A5 "FIRST RUN"
+```
+
+Panel will be available at `http://your-server:8080`
+
+#### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WG_ENDPOINT` | (required) | Server's public IP |
+| `WG_PORT` | `51820` | WireGuard UDP port |
+| `WG_ADDRESS` | `10.0.0.1/24` | VPN subnet |
+| `WG_INTERFACE` | `awg0` | Interface name |
+| `DNS_SERVERS` | `1.1.1.1,8.8.8.8` | DNS for clients |
+| `SESSION_SECRET` | (random) | Session signing key |
+| `AWG_JC` | `4` | Obfuscation: junk packets count |
+| `AWG_JMIN` | `40` | Obfuscation: min junk size |
+| `AWG_JMAX` | `70` | Obfuscation: max junk size |
+| `AWG_S1` | `55` | Obfuscation: init packet S1 |
+| `AWG_S2` | `55` | Obfuscation: init packet S2 |
+| `AWG_H1-H4` | `1234567891-4` | Obfuscation: header keys |
 
 ### Production (without Docker)
 

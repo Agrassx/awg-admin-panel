@@ -1,0 +1,128 @@
+# =============================================================================
+# AWG Admin Panel - Docker Compose Configuration
+# =============================================================================
+# 
+# Quick Start:
+#   1. Copy this file to your server
+#   2. Edit WG_ENDPOINT to your server's public IP
+#   3. Run: docker-compose up -d
+#   4. Open http://your-server:8080 in browser
+#   5. Check logs for admin password: docker-compose logs app
+#
+# =============================================================================
+
+services:
+  app:
+    image: ghcr.io/agrassx/awg-admin-panel:main
+    container_name: awg-admin
+    restart: unless-stopped
+    
+    # Required capabilities for WireGuard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    
+    # Required for WireGuard kernel module (if using kernel mode)
+    # sysctls:
+    #   - net.ipv4.ip_forward=1
+    #   - net.ipv4.conf.all.src_valid_mark=1
+    
+    # Network mode: use host network for direct access to interfaces
+    # Alternative: use bridge network with port mapping (see below)
+    network_mode: host
+    
+    environment:
+      # ===========================================
+      # REQUIRED: Set your server's public IP here
+      # ===========================================
+      WG_ENDPOINT: "${WG_ENDPOINT:-YOUR_SERVER_PUBLIC_IP}"
+      
+      # WireGuard interface settings
+      WG_INTERFACE: awg0
+      WG_PORT: "51820"
+      WG_ADDRESS: "10.0.0.1/24"
+      
+      # DNS servers for clients
+      DNS_SERVERS: "1.1.1.1,8.8.8.8"
+      
+      # Admin panel port
+      SERVER_PORT: "8080"
+      
+      # Session secret (generate with: openssl rand -base64 32)
+      SESSION_SECRET: "${SESSION_SECRET:-}"
+      
+      # Enable NAT for client internet access
+      ENABLE_NAT: "true"
+      
+      # ============================================
+      # AmneziaWG Obfuscation Settings
+      # ============================================
+      # These settings make traffic look like random noise
+      # All clients must use the same values!
+      #
+      # Jc  - Junk packet count (1-128)
+      # Jmin/Jmax - Junk packet size range (0-1280)
+      # S1/S2 - Init packet magic header sizes
+      # H1-H4 - Header obfuscation keys
+      # ============================================
+      AWG_JC: "4"
+      AWG_JMIN: "40"
+      AWG_JMAX: "70"
+      AWG_S1: "55"
+      AWG_S2: "55"
+      AWG_H1: "1234567891"
+      AWG_H2: "1234567892"
+      AWG_H3: "1234567893"
+      AWG_H4: "1234567894"
+    
+    volumes:
+      # Persistent data (database, keys)
+      - awg-data:/app/data
+      
+      # WireGuard configs and keys
+      - awg-config:/etc/amnezia/amneziawg
+      
+      # Required for WireGuard
+      - /dev/net/tun:/dev/net/tun
+    
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/auth/me"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  awg-data:
+    name: awg-admin-data
+  awg-config:
+    name: awg-admin-config
+
+# =============================================================================
+# Alternative configuration with bridge network (if host mode is not desired)
+# =============================================================================
+# 
+# To use bridge network instead of host:
+# 1. Comment out "network_mode: host" above
+# 2. Uncomment the "ports" section below
+# 3. Uncomment the "networks" section
+#
+# Note: With bridge network, you need to manually set up routing on the host
+#
+# services:
+#   app:
+#     ...
+#     # network_mode: host  # Comment this out
+#     ports:
+#       - "8080:8080"       # Admin panel
+#       - "51820:51820/udp" # WireGuard
+#     networks:
+#       - awg-network
+#
+# networks:
+#   awg-network:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.0.0/24

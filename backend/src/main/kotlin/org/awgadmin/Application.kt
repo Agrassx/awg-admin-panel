@@ -84,7 +84,10 @@ fun main() {
         println("[WARN] Using MOCK WireGuard interface (for development)")
         MockWgInterface(
             serverEndpoint = config.wgEndpoint,
+            serverPort = config.wgPort,
+            serverAddress = config.wgAddress,
             dns = config.dns,
+            obfuscation = config.obfuscation,
         )
     } else {
         println("[INFO] Using Shell WireGuard interface: ${config.wgInterfaceName}")
@@ -93,7 +96,10 @@ fun main() {
             awgBinary = config.awgBinary,
             wgBinary = config.wgBinary,
             serverEndpoint = config.wgEndpoint,
+            serverPort = config.wgPort,
+            serverAddress = config.wgAddress,
             dns = config.dns,
+            obfuscation = config.obfuscation,
         )
     }
 

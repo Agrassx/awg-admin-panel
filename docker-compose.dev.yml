@@ -1,0 +1,50 @@
+# =============================================================================
+# AWG Admin Panel - Development Docker Compose
+# =============================================================================
+# 
+# Use this for local development/testing without real WireGuard
+#
+# Run: docker-compose -f docker-compose.dev.yml up -d
+#
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: awg-admin-dev
+    restart: unless-stopped
+    
+    ports:
+      - "8080:8080"
+    
+    environment:
+      # Use mock WireGuard (no real VPN)
+      USE_MOCK_WG: "true"
+      
+      # Settings
+      WG_ENDPOINT: "localhost"
+      WG_INTERFACE: awg0
+      WG_PORT: "51820"
+      WG_ADDRESS: "10.0.0.1/24"
+      DNS_SERVERS: "1.1.1.1,8.8.8.8"
+      SERVER_PORT: "8080"
+      
+      # Obfuscation settings (for config generation)
+      AWG_JC: "4"
+      AWG_JMIN: "40"
+      AWG_JMAX: "70"
+      AWG_S1: "55"
+      AWG_S2: "55"
+      AWG_H1: "1234567891"
+      AWG_H2: "1234567892"
+      AWG_H3: "1234567893"
+      AWG_H4: "1234567894"
+    
+    volumes:
+      - awg-data-dev:/app/data
+
+volumes:
+  awg-data-dev:
+    name: awg-admin-data-dev
