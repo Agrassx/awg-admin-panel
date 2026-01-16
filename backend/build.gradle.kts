@@ -43,6 +43,9 @@ tasks.processResources {
 }
 
 tasks.jar {
+    archiveBaseName.set("awg-admin")
+    archiveVersion.set("")
+    
     manifest {
         attributes["Main-Class"] = "org.awgadmin.ApplicationKt"
     }

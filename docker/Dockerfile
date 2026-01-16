@@ -8,8 +8,8 @@ COPY gradle ./gradle
 COPY frontend ./frontend
 COPY backend ./backend
 
-# Build backend JAR (includes frontend via processResources)
-RUN gradle :backend:jar --no-daemon
+# Build frontend first, then backend JAR (includes frontend via processResources)
+RUN gradle :frontend:jsBrowserProductionWebpack :backend:jar --no-daemon
 
 # Runtime stage - using Debian-based image for glibc compatibility with awg/wg binaries
 FROM eclipse-temurin:21-jre
@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy backend jar (contains frontend static files)
-COPY --from=build /app/backend/build/libs/*.jar app.jar
+COPY --from=build /app/backend/build/libs/awg-admin.jar app.jar
 
 # Create data directory
 RUN mkdir -p /app/data
@@ -41,4 +41,10 @@ EXPOSE 8080
 
 VOLUME ["/app/data"]
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# JVM options for containers
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/api/auth/me || exit 1
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
