@@ -89,11 +89,28 @@ jobs:
             -p 8080:8080 \
             ${{ env.REGISTRY }}/${{ steps.vars.outputs.image_name }}:${{ steps.branch.outputs.name }}-${{ steps.vars.outputs.short_sha }}
           
-          # Wait for container to start
-          sleep 10
+          # Wait for container to start (JVM needs more time)
+          echo "Waiting for container to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/api/auth/me > /dev/null 2>&1; then
+              echo "Container is ready!"
+              break
+            fi
+            echo "Attempt $i/30 - waiting..."
+            sleep 2
+          done
           
-          # Health check
-          curl -f http://localhost:8080/api/clients || exit 1
+          # Health check - /api/auth/me returns 401 when not authenticated (server is working)
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/auth/me)
+          echo "Health check response: HTTP $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "200" ]; then
+            echo "Container is healthy!"
+          else
+            echo "Container health check failed with HTTP $HTTP_CODE"
+            docker logs test-container
+            exit 1
+          fi
           
           # Cleanup
           docker stop test-container
