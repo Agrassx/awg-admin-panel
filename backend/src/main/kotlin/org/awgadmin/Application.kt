@@ -14,6 +14,7 @@ import io.ktor.server.http.content.staticResources
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.server.plugins.defaultheaders.DefaultHeaders
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
@@ -109,21 +110,28 @@ fun main() {
 
     println("[INFO] Starting AWG Admin on port ${config.serverPort}")
 
+    // Security warning for production
+    if (config.security.production && config.sessionSecret.isBlank()) {
+        println("[WARN] SECURITY: SESSION_SECRET is not set! Sessions will be invalidated on restart.")
+        println("[WARN] Generate one with: openssl rand -base64 32")
+    }
+
     // Start server
     embeddedServer(
         Netty,
         port = config.serverPort,
-        module = { configureApp(clientService, authService, config.sessionSecret) },
+        module = { configureApp(clientService, authService, config) },
     ).start(wait = true)
 }
 
 fun Application.configureApp(
     clientService: ClientService,
     authService: AuthService,
-    sessionSecret: String,
+    config: AppConfig,
 ) {
     // Generate session signing key from secret
-    val sessionSignKey = generateSessionKey(sessionSecret)
+    val sessionSignKey = generateSessionKey(config.sessionSecret)
+    val isProduction = config.security.production
 
     install(Sessions) {
         cookie<UserSession>("AWG_SESSION", SessionStorageMemory()) {
@@ -131,6 +139,10 @@ fun Application.configureApp(
             cookie.httpOnly = true
             cookie.maxAgeInSeconds = 86400 // 24 hours
             cookie.extensions["SameSite"] = "Strict"
+            // Enable Secure flag for HTTPS in production
+            if (config.security.secureCookies) {
+                cookie.secure = true
+            }
             transform(
                 io.ktor.server.sessions.SessionTransportTransformerMessageAuthentication(
                     sessionSignKey,
@@ -155,10 +167,21 @@ fun Application.configureApp(
     install(ContentNegotiation) {
         json(
             Json {
-                prettyPrint = true
+                prettyPrint = !isProduction // Disable pretty print in production
                 ignoreUnknownKeys = true
             }
         )
+    }
+
+    // Security headers
+    install(DefaultHeaders) {
+        header("X-Content-Type-Options", "nosniff")
+        header("X-Frame-Options", "DENY")
+        header("X-XSS-Protection", "1; mode=block")
+        header("Referrer-Policy", "strict-origin-when-cross-origin")
+        if (config.security.secureCookies) {
+            header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        }
     }
 
     install(CORS) {
@@ -170,7 +193,16 @@ fun Application.configureApp(
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
         allowCredentials = true
-        anyHost()
+        
+        // Security: Only allow specific origins in production
+        if (config.security.allowedOrigins.isNotEmpty()) {
+            config.security.allowedOrigins.forEach { origin ->
+                allowHost(origin.removePrefix("https://").removePrefix("http://"))
+            }
+        } else {
+            // Development mode: allow any host
+            anyHost()
+        }
     }
 
     install(StatusPages) {
@@ -193,10 +225,13 @@ fun Application.configureApp(
             )
         }
         exception<Throwable> { call, cause ->
-            cause.printStackTrace()
+            if (!isProduction) {
+                cause.printStackTrace()
+            }
             call.respond(
                 HttpStatusCode.InternalServerError,
-                ErrorResponse("Internal error: ${cause.message}"),
+                // Hide internal error details in production
+                ErrorResponse(if (isProduction) "Internal server error" else "Internal error: ${cause.message}"),
             )
         }
     }
@@ -206,9 +241,9 @@ fun Application.configureApp(
         route("/api/auth") {
             post("/login") {
                 val request = call.receive<LoginRequest>()
-                val ipAddress = call.request.headers["X-Forwarded-For"]
-                    ?.split(",")?.firstOrNull()?.trim()
-                    ?: call.request.local.remoteAddress
+                
+                // Get client IP with security considerations
+                val ipAddress = getClientIp(call, config.security.trustProxy)
 
                 try {
                     val user = authService.authenticate(ipAddress, request.username, request.password)
@@ -284,4 +319,51 @@ private fun generateSessionKey(secret: String): ByteArray {
     // Derive key from secret using simple hash
     val digest = java.security.MessageDigest.getInstance("SHA-256")
     return digest.digest(secret.toByteArray())
+}
+
+/**
+ * Get client IP address with proxy trust consideration.
+ * 
+ * Security: X-Forwarded-For can be spoofed. Only trust it when behind a known proxy.
+ */
+private fun getClientIp(call: io.ktor.server.application.ApplicationCall, trustProxy: Boolean): String {
+    if (trustProxy) {
+        // Try standard proxy headers
+        val forwarded = call.request.headers["X-Forwarded-For"]
+            ?.split(",")
+            ?.firstOrNull()
+            ?.trim()
+            ?.takeIf { isValidIp(it) }
+        
+        if (forwarded != null) {
+            return forwarded
+        }
+        
+        // Try X-Real-IP (nginx)
+        val realIp = call.request.headers["X-Real-IP"]
+            ?.trim()
+            ?.takeIf { isValidIp(it) }
+        
+        if (realIp != null) {
+            return realIp
+        }
+    }
+    
+    // Fall back to direct connection IP
+    return call.request.local.remoteAddress
+}
+
+/**
+ * Basic IP address validation.
+ */
+private fun isValidIp(ip: String): Boolean {
+    // IPv4
+    val ipv4Regex = """^(\d{1,3}\.){3}\d{1,3}$""".toRegex()
+    if (ipv4Regex.matches(ip)) {
+        return ip.split(".").all { it.toIntOrNull() in 0..255 }
+    }
+    
+    // IPv6 (simplified check)
+    val ipv6Regex = """^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$""".toRegex()
+    return ipv6Regex.matches(ip)
 }

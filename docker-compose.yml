@@ -48,8 +48,25 @@ services:
       # Admin panel port
       SERVER_PORT: "8080"
       
-      # Session secret (generate with: openssl rand -base64 32)
+      # ============================================
+      # Security Settings
+      # ============================================
+      # IMPORTANT: Generate a secret for production!
+      # Run: openssl rand -base64 32
       SESSION_SECRET: "${SESSION_SECRET:-}"
+      
+      # Production mode (enables security hardening)
+      PRODUCTION: "true"
+      
+      # Use secure cookies (set to true if using HTTPS)
+      SECURE_COOKIES: "${SECURE_COOKIES:-false}"
+      
+      # Allowed CORS origins (comma-separated, e.g., "https://admin.example.com")
+      # Leave empty to allow only same-origin requests
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
+      
+      # Trust X-Forwarded-For header (set to true if behind a reverse proxy)
+      TRUST_PROXY: "${TRUST_PROXY:-true}"
       
       # Enable NAT for client internet access
       ENABLE_NAT: "true"

@@ -16,6 +16,7 @@ data class AppConfig(
     val useMockWg: Boolean,
     val sessionSecret: String,
     val obfuscation: ObfuscationConfig,
+    val security: SecurityConfig,
 ) {
     companion object {
         fun fromEnv(): AppConfig = AppConfig(
@@ -31,6 +32,29 @@ data class AppConfig(
             useMockWg = env("USE_MOCK_WG", "false").toBoolean(),
             sessionSecret = env("SESSION_SECRET", ""),
             obfuscation = ObfuscationConfig.fromEnv(),
+            security = SecurityConfig.fromEnv(),
+        )
+
+        private fun env(name: String, default: String): String =
+            System.getenv(name) ?: default
+    }
+}
+
+/**
+ * Security configuration.
+ */
+data class SecurityConfig(
+    val production: Boolean,        // Enable production security settings
+    val secureCookies: Boolean,     // Use Secure flag on cookies (HTTPS only)
+    val allowedOrigins: List<String>, // CORS allowed origins (empty = allow configured origins only)
+    val trustProxy: Boolean,        // Trust X-Forwarded-For header
+) {
+    companion object {
+        fun fromEnv(): SecurityConfig = SecurityConfig(
+            production = env("PRODUCTION", "false").toBoolean(),
+            secureCookies = env("SECURE_COOKIES", "false").toBoolean(),
+            allowedOrigins = env("ALLOWED_ORIGINS", "").split(",").filter { it.isNotBlank() },
+            trustProxy = env("TRUST_PROXY", "true").toBoolean(),
         )
 
         private fun env(name: String, default: String): String =

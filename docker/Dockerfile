@@ -88,6 +88,12 @@ ENV DNS_SERVERS=1.1.1.1,8.8.8.8
 ENV SESSION_SECRET=""
 ENV USE_MOCK_WG=false
 
+# Security settings
+ENV PRODUCTION=false
+ENV SECURE_COOKIES=false
+ENV ALLOWED_ORIGINS=""
+ENV TRUST_PROXY=true
+
 # AmneziaWG obfuscation settings (default values for high obfuscation)
 ENV AWG_JC=4
 ENV AWG_JMIN=40
